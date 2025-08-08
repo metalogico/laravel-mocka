@@ -1,7 +1,6 @@
 # Laravel Mocka ☕
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/metalogico/laravel-mocka.svg?style=flat-square)](https://packagist.org/packages/metalogico/laravel-mocka)
-[![Total Downloads](https://img.shields.io/packagist/dt/metalogico/laravel-mocka.svg?style=flat-square)](https://packagist.org/packages/metalogico/laravel-mocka)
 
 Laravel Mocka provides fake API responses to designated users while serving real data to everyone else. A drop-in replacement for Laravel's Http facade, perfect for app store submissions, demos, and testing without disrupting production traffic.
 
