@@ -5,6 +5,8 @@ namespace Metalogico\Mocka\Http;
 use Psr\Http\Message\RequestInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Promise\Create as PromiseCreate;
+use Metalogico\Mocka\Support\MockaEngine;
 
 class MockaMiddleware
 {
@@ -16,9 +18,10 @@ class MockaMiddleware
         return function (callable $handler) {
             return function (RequestInterface $request, array $options) use ($handler) {
                 // Config flags (LEAN activator: per-user)
-                $enabled = (bool) config('mocka.enabled', false);
-                $users   = (array) config('mocka.users', []);
-                $logging = (bool) config('mocka.logs', false);
+                $enabled      = (bool) config('mocka.enabled', false);
+                $users        = (array) config('mocka.users', []);
+                $logging      = (bool) config('mocka.logs', false);
+                $environments = (array) config('mocka.environments', ['local']);
 
                 // Determine current app user email when available (via Auth facade)
                 $user  = Auth::user();
@@ -33,6 +36,9 @@ class MockaMiddleware
                 $allowedHosts = (array) config('mocka.allowed_hosts', []);
                 $hostAllowed  = empty($allowedHosts) || in_array($host, $allowedHosts, true);
 
+                // Allowed environments (default only 'local')
+                $envAllowed = empty($environments) || app()->environment($environments);
+
                 // Activator: user email in config list (case-insensitive)
                 $emailInList = false;
                 if ($email && $users) {
@@ -40,7 +46,7 @@ class MockaMiddleware
                     $emailInList = in_array(strtolower($email), $lower, true);
                 }
 
-                $withMocka = $enabled && $hostAllowed && $emailInList;
+                $withMocka = $enabled && $envAllowed && $hostAllowed && $emailInList;
 
                 // Prepare log fields once
                 $internal = null;
@@ -60,10 +66,16 @@ class MockaMiddleware
                     Log::debug(sprintf('☕ Mocka: %s requested %s - %s', $who, $what, $mode));
                 }
 
-                // Always pass-through for MVP
-                $promise = $handler($request, $options);
+                // If Mocka is active, delegate to the Engine for a possible mocked response
+                if ($withMocka) {
+                    $response = MockaEngine::maybeRespond($request, $options);
+                    if ($response) {
+                        return PromiseCreate::promiseFor($response);
+                    }
+                }
 
-                return $promise;
+                // Pass-through to real handler
+                return $handler($request, $options);
             };
         };
     }

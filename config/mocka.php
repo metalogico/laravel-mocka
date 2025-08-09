@@ -19,5 +19,20 @@ return [
 
     // Default artificial delay for mocked responses (ms)
     'default_delay_ms' => 0,
+
+    // Allowed application environments for Mocka activation (default: local only)
+    // Extend this array to enable in other envs (e.g. ['local','staging']).
+    'environments' => ['local'],
+
+    // URL mappings: exact and wildcard patterns only (no regex in MVP)
+    // Example item:
+    // [
+    //   'url' => env('EXTERNAL_API_URL').'/api/users/*',
+    //   'match' => 'wildcard', // or omit for exact
+    //   'file' => 'users.mock.php',
+    //   'key'  => 'GET.show',
+    //   'delay' => 0,
+    // ]
+    'mappings' => [],
 ];
 
