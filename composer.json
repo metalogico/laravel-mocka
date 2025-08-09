@@ -1,0 +1,55 @@
+{
+    "name": "metalogico/laravel-mocka",
+    "description": "Laravel Mocka provides fake API responses to designated users while serving real data to everyone else. A drop-in replacement for Laravel's Http facade, perfect for app store submissions, demos, and testing without disrupting production traffic",
+    "keywords": [
+        "laravel",
+        "forms",
+        "mocks",
+        "api",
+        "testing"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/metalogico/laravel-mocka",
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Metalogico\\Mocka\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Metalogico",
+            "email": "michele.brandolin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^9.0|^10.0|^11.0|^12.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Metalogico\\Mocka\\Providers\\MockaServiceProvider"
+            ],
+            "aliases": {
+                "MockaHttp": "Metalogico\\Mocka\\Facades\\MockaHttp"
+            }
+        }
+    },
+    "require-dev": {
+        "pestphp/pest-plugin-laravel": "^3.2",
+        "orchestra/testbench": "^10.4",
+        "pestphp/pest": "^3.8"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
