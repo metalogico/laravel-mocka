@@ -4,6 +4,7 @@ namespace Metalogico\Mocka\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Metalogico\Mocka\Http\MockaFactory;
+use Metalogico\Mocka\Console\MockaListCommand;
 
 class MockaServiceProvider extends ServiceProvider
 {
@@ -27,5 +28,12 @@ class MockaServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../config/mocka.php' => config_path('mocka.php'),
         ], 'mocka-config');
+
+        // Register Artisan commands when running in console
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                MockaListCommand::class,
+            ]);
+        }
     }
 }
