@@ -28,10 +28,9 @@ return [
     // Example item:
     // [
     //   'url' => env('EXTERNAL_API_URL').'/api/users/*',
-    //   'match' => 'wildcard', // or omit for exact
     //   'file' => 'users.mock.php',
     //   'key'  => 'GET.show',
-    //   'delay' => 0,
+    //   'errors' => 'GET.showError',
     // ]
     'mappings' => [],
 ];

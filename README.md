@@ -20,9 +20,9 @@ When your Laravel app calls external APIs (like DMS, MES, or any third-party ser
 - 📁 **File-based mocks** - Organize mock responses in PHP files
 - 🎨 **Response templating** - Dynamic mock responses with Faker integration
 - 📊 **Request logging** - Track which requests are mocked vs real
-- 🛣️ **Route-specific control** - Enable/disable mocking per route via middleware (coming soon ™)
+- ❌ **Error simulation** - Test failure scenarios easily
+- 🛣️ **Header activator** - Enable/disable mocking via `X-Mocka` header
 - 🐌 **Rate limiting simulation** - Simulate slow APIs for testing (coming soon ™)
-- ❌ **Error simulation** - Test failure scenarios easily (coming soon ™)
 - 🔍 **Advanced URL matching** - Regex, wildcards, and parameter matching (coming soon ™)
 - ⌘ **Command Line tools** - Validate mock files and list mappings (coming soon ™)
 - ⚡ **Zero performance impact** - Only active for designated users

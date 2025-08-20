@@ -17,36 +17,19 @@ class MockaMiddleware
     {
         return function (callable $handler) {
             return function (RequestInterface $request, array $options) use ($handler) {
-                // Config flags (LEAN activator: per-user)
-                $enabled      = (bool) config('mocka.enabled', false);
-                $users        = (array) config('mocka.users', []);
-                $logging      = (bool) config('mocka.logs', false);
-                $environments = (array) config('mocka.environments', ['local']);
+                // Config flags
+                $logging = (bool) config('mocka.logs', false);
 
                 // Determine current app user email when available (via Auth facade)
                 $user  = Auth::user();
                 $email = $user ? ($user->email ?? null) : null;
 
-                // Determine outgoing host and build display URL
+                // Determine outgoing URL (for logs)
                 $uri  = $request->getUri();
-                $host = $uri->getHost();
                 $url  = (string) $uri;
 
-                // Allowed hosts (security guard)
-                $allowedHosts = (array) config('mocka.allowed_hosts', []);
-                $hostAllowed  = empty($allowedHosts) || in_array($host, $allowedHosts, true);
-
-                // Allowed environments (default only 'local')
-                $envAllowed = empty($environments) || app()->environment($environments);
-
-                // Activator: user email in config list (case-insensitive)
-                $emailInList = false;
-                if ($email && $users) {
-                    $lower = array_map('strtolower', $users);
-                    $emailInList = in_array(strtolower($email), $lower, true);
-                }
-
-                $withMocka = $enabled && $envAllowed && $hostAllowed && $emailInList;
+                // Decide activation (also strips X-Mocka from request if present)
+                [$withMocka, $request, $reason] = self::decideActivation($request);
 
                 // Prepare log fields once
                 $internal = null;
@@ -60,7 +43,7 @@ class MockaMiddleware
 
                 $who  = $email ?: 'guest';
                 $what = $internal ?: ($request->getMethod() . ' ' . $url);
-                $mode = $withMocka ? 'With Mocka' : 'Without Mocka';
+                $mode = $withMocka ? ('With Mocka' . ($reason ? (' ['.$reason.']') : '')) : 'Without Mocka';
 
                 if ($logging) {
                     Log::debug(sprintf('☕ Mocka: %s requested %s - %s', $who, $what, $mode));
@@ -78,5 +61,59 @@ class MockaMiddleware
                 return $handler($request, $options);
             };
         };
+    }
+
+    /**
+     * Decide whether Mocka should be active for this outgoing request.
+     * Early-exit approach. Also strips the control header 'X-Mocka' from the request.
+     *
+     * Returns array: [bool $active, RequestInterface $request, string $reason]
+     *   $reason is one of '', 'user', 'header'.
+     */
+    private static function decideActivation(RequestInterface $request): array
+    {
+        // Always sanitize control header (do not leak upstream)
+        $hasXMocka  = $request->hasHeader('X-Mocka');
+        $headerLine = strtolower(trim($request->getHeaderLine('X-Mocka')));
+        if ($hasXMocka) {
+            $request = $request->withoutHeader('X-Mocka');
+        }
+
+        // Global switches and security checks
+        if (!(bool) config('mocka.enabled', false)) {
+            return [false, $request, ''];
+        }
+
+        // Environment checks
+        $environments = (array) config('mocka.environments', ['local']);
+        if (!empty($environments) && !app()->environment($environments)) {
+            return [false, $request, ''];
+        }
+
+        // Hostname checks
+        $allowedHosts = (array) config('mocka.allowed_hosts', []);
+        $host = $request->getUri()->getHost();
+        if (!empty($allowedHosts) && !in_array($host, $allowedHosts, true)) {
+            return [false, $request, ''];
+        }
+
+        // User allowlist
+        $user  = Auth::user();
+        $email = $user ? ($user->email ?? null) : null;
+        $users = (array) config('mocka.users', []);
+        if ($email && $users) {
+            $lower = array_map('strtolower', $users);
+            if (in_array(strtolower($email), $lower, true)) {
+                return [true, $request, 'user'];
+            }
+        }
+
+        // Header activator (truthy or just present)
+        $headerActive = $hasXMocka && ($headerLine === '' || $headerLine === '1' || $headerLine === 'true' || $headerLine === 'yes' || $headerLine === 'on');
+        if ($headerActive) {
+            return [true, $request, 'header'];
+        }
+
+        return [false, $request, ''];
     }
 }
