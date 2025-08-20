@@ -22,6 +22,7 @@ When your Laravel app calls external APIs (like DMS, MES, or any third-party ser
 - 📊 **Request logging** - Track which requests are mocked vs real
 - ❌ **Error simulation** - Test failure scenarios easily
 - 🛣️ **Header activator** - Enable/disable mocking via `X-Mocka` header
+- 📝 **Force activation** - Enable/disable mocking via `withOptions(['mocka' => true])`
 - 🐌 **Rate limiting simulation** - Simulate slow APIs for testing (coming soon ™)
 - 🔍 **Advanced URL matching** - Regex, wildcards, and parameter matching (coming soon ™)
 - ⌘ **Command Line tools** - Validate mock files and list mappings (coming soon ™)
@@ -320,6 +321,25 @@ Add delays to simulate slow APIs:
 ];
 ```
 
+### Jobs and Artisan (Force Activation)
+
+When running inside queued Jobs or Artisan commands (where there is no web request/user), you can explicitly enable Mocka per request using options:
+
+```php
+use Metalogico\Mocka\Facades\MockaHttp;
+
+$enabled = ($user === 'reviewer@apple.com') ? true : false; 
+
+$response = MockaHttp::withOptions(['mocka' => $enabled])
+    ->get(config('external_api_url').'/api/files');
+```
+
+Notes:
+
+- Mocka must still be enabled and allowed in the current environment/host by config.
+- If the current user is in `MOCKA_USERS`, forcing is not required (it's always active).
+- You can also use the `X-Mocka` header in regular request contexts to activate per-call.
+
 ## Artisan Commands
 
 ### Validate Mock Files
@@ -368,7 +388,7 @@ return [
 
 ## How It Works
 
-1. **User Check**: When a request is made, Mocka checks if the current user is in the `users` list
+1. **Activation Check**: If enabled and allowed by environment/host, Mocka checks activation triggers in order: user allowlist, `withOptions(['mocka' => true])`, or `X-Mocka` header
 2. **URL Matching**: If the user should be mocked, it matches the request URL against the configured mappings
 3. **Mock Loading**: Loads the appropriate mock file and extracts the response using dot notation
 4. **Template Processing**: Processes any template variables (faker, time functions, etc.)

@@ -29,7 +29,7 @@ class MockaMiddleware
                 $url  = (string) $uri;
 
                 // Decide activation (also strips X-Mocka from request if present)
-                [$withMocka, $request, $reason] = self::decideActivation($request);
+                [$withMocka, $request, $reason] = self::decideActivation($request, $options);
 
                 // Prepare log fields once
                 $internal = null;
@@ -67,10 +67,15 @@ class MockaMiddleware
      * Decide whether Mocka should be active for this outgoing request.
      * Early-exit approach. Also strips the control header 'X-Mocka' from the request.
      *
+     * Honors activation triggers in priority:
+     * - user allowlist
+     * - options['mocka'] (for Jobs/Artisan)
+     * - header 'X-Mocka'
+     *
      * Returns array: [bool $active, RequestInterface $request, string $reason]
-     *   $reason is one of '', 'user', 'header'.
+     *   $reason is one of '', 'user', 'option', 'header'.
      */
-    private static function decideActivation(RequestInterface $request): array
+    private static function decideActivation(RequestInterface $request, array $options): array
     {
         // Always sanitize control header (do not leak upstream)
         $hasXMocka  = $request->hasHeader('X-Mocka');
@@ -106,6 +111,21 @@ class MockaMiddleware
             if (in_array(strtolower($email), $lower, true)) {
                 return [true, $request, 'user'];
             }
+        }
+
+        // Forced via options (usable in Jobs/Artisan): withOptions(['mocka' => true])
+        $forceOption  = $options['mocka'] ?? null;
+        $optionActive = false;
+        if ($forceOption !== null) {
+            if (is_bool($forceOption)) {
+                $optionActive = $forceOption;
+            } else {
+                $val = strtolower(trim((string) $forceOption));
+                $optionActive = ($val === '' || $val === '1' || $val === 'true' || $val === 'yes' || $val === 'on');
+            }
+        }
+        if ($optionActive) {
+            return [true, $request, 'option'];
         }
 
         // Header activator (truthy or just present)
