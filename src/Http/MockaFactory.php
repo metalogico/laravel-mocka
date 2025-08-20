@@ -2,10 +2,8 @@
 
 namespace Metalogico\Mocka\Http;
 
-use GuzzleHttp\HandlerStack;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Log;
 
 class MockaFactory extends Factory
 {

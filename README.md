@@ -16,14 +16,15 @@ When your Laravel app calls external APIs (like DMS, MES, or any third-party ser
 ## Features
 
 - 🎯 **User-specific mocking** - Mock responses only for designated users
-- 🛣️ **Route-specific control** - Enable/disable mocking per route via middleware
 - 🔄 **Drop-in replacement** - Use `MockaHttp` instead of Laravel's `Http` facade
 - 📁 **File-based mocks** - Organize mock responses in PHP files
 - 🎨 **Response templating** - Dynamic mock responses with Faker integration
-- 🐌 **Rate limiting simulation** - Simulate slow APIs for testing
-- ❌ **Error simulation** - Test failure scenarios easily
-- 🔍 **Advanced URL matching** - Regex, wildcards, and parameter matching
 - 📊 **Request logging** - Track which requests are mocked vs real
+- 🛣️ **Route-specific control** - Enable/disable mocking per route via middleware (coming soon ™)
+- 🐌 **Rate limiting simulation** - Simulate slow APIs for testing (coming soon ™)
+- ❌ **Error simulation** - Test failure scenarios easily (coming soon ™)
+- 🔍 **Advanced URL matching** - Regex, wildcards, and parameter matching (coming soon ™)
+- ⌘ **Command Line tools** - Validate mock files and list mappings (coming soon ™)
 - ⚡ **Zero performance impact** - Only active for designated users
 
 ## Installation
@@ -118,7 +119,7 @@ Replace Laravel's `Http` facade with `MockaHttp`:
 
 namespace App\Services;
 
-use LaravelMocka\MockaHttp;
+use Metalogico\Mocka\Facades\MockaHttp;
 
 class DmsService
 {
@@ -187,12 +188,12 @@ For complex testing with varying data:
 return [
     'GET' => [
         'userList' => fn() => [
-            'users' => collect(range(1, faker()->numberBetween(3, 8)))
+            'users' => collect(range(1, fake()->numberBetween(3, 8)))
                 ->map(fn() => [
-                    'name' => faker()->name,
-                    'email' => faker()->email,
+                    'name' => fake()->name,
+                    'email' => fake()->email,
                 ]),
-            'total' => faker()->numberBetween(50, 200),
+            'total' => fake()->numberBetween(50, 200),
             ],
         ],
     ],
@@ -209,12 +210,12 @@ return [
             'status' => 'success',        // Static
             'timestamp' => time(),        // Static but with function
             'dynamic_data' => fn() => [
-                'user_count' => faker()->numberBetween(5, 20),
+                'user_count' => fake()->numberBetween(5, 20),
                 'featured_products' => collect(range(1, 3))
                     ->map(fn() => [
-                        'id' => faker()->numberBetween(1000, 9999),
-                        'name' => faker()->words(3, true),
-                        'price' => faker()->randomFloat(2, 10, 500),
+                        'id' => fake()->numberBetween(1000, 9999),
+                        'name' => fake()->words(3, true),
+                        'price' => fake()->randomFloat(2, 10, 500),
                     ]),
                 ],
             ],
@@ -245,7 +246,7 @@ Configure sophisticated URL matching patterns:
         'key' => 'GET.anyUser',
     ],
     
-    // Regex matching
+    // Regex matching (coming soom ™)
     [
         'url' => '/^https:\/\/api\.example\.com\/orders\/\d+$/',
         'match' => 'regex',
@@ -276,9 +277,9 @@ Define error responses in your mock files:
 return [
     'GET' => [
         'specificUser' => fn() => [
-            'id' => faker()->numberBetween(1000, 9999),
-            'name' => faker()->name,
-            'email' => faker()->email,
+            'id' => fake()->numberBetween(1000, 9999),
+            'name' => fake()->name,
+            'email' => fake()->email,
         ],
         
         'specificUserErrors' => [
@@ -295,8 +296,8 @@ return [
                 ],
                 503 => fn() => [ // Dynamic error responses
                     'message' => 'Service temporarily unavailable',
-                    'retry_after' => faker()->numberBetween(30, 300),
-                    'incident_id' => faker()->uuid,
+                    'retry_after' => fake()->numberBetween(30, 300),
+                    'incident_id' => fake()->uuid,
                 ],
             ],
         ],

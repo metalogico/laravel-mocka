@@ -22,6 +22,26 @@ class MockaEngine
             }
 
             $method = strtoupper($request->getMethod());
+
+            // Error simulation (optional): mapping may define an 'errors' profile
+            $errorConfig = null;
+            if (array_key_exists('errors', $mapping)) {
+                $errorsDef = $mapping['errors'];
+                if (is_string($errorsDef)) {
+                    // Load from the same file using provided key (method prefix supported by loader)
+                    $errorConfig = MockaLoader::load((string) $mapping['file'], $method, $errorsDef);
+                } elseif (is_array($errorsDef)) {
+                    // Inline profile
+                    $errorConfig = $errorsDef;
+                }
+            }
+
+            if ($picked = self::maybePickError($errorConfig)) {
+                // Build and return an error response immediately
+                $errPayload = MockaEvaluator::resolve($picked['payload']);
+                return MockaResponder::toPsrResponse($errPayload, $mapping, $picked['status']);
+            }
+
             $value = MockaLoader::load((string) $mapping['file'], $method, $mapping['key'] ?? null);
             if ($value === null) {
                 return null;
@@ -29,14 +49,65 @@ class MockaEngine
 
             // v1 simplification: do not pass request/context to mapping closures
             $payload = MockaEvaluator::resolve($value);
-            $response = MockaResponder::toPsrResponse($payload, $mapping);
+            $response = MockaResponder::toPsrResponse($payload, $mapping, 200);
 
             return $response;
         } catch (\Throwable $e) {
             if ((bool) config('mocka.logs', false)) {
-                Log::warning('☕ Mocka mapping error: ' . $e->getMessage());
+                Log::warning(' Mocka mapping error: ' . $e->getMessage());
             }
             return null;
         }
+    }
+
+    /**
+     * Given an error profile, randomly decide whether to emit an error and which one.
+     * Expected shape:
+     * [
+     *   'error_rate' => 25, // 0-100
+     *   'errors' => [
+     *     422 => array|Closure,
+     *     404 => array|Closure,
+     *     503 => array|Closure,
+     *   ],
+     * ]
+     * Returns ['status' => int, 'payload' => mixed] or null if no error selected.
+     */
+    private static function maybePickError(mixed $errorConfig): ?array
+    {
+        if (!is_array($errorConfig)) {
+            return null;
+        }
+
+        $rate = (int) ($errorConfig['error_rate'] ?? 0);
+        if ($rate <= 0) {
+            return null;
+        }
+
+        try {
+            $roll = random_int(1, 100);
+        } catch (\Throwable $e) {
+            // Fallback if random_int unavailable for any reason
+            $roll = mt_rand(1, 100);
+        }
+
+        if ($roll > $rate) {
+            return null;
+        }
+
+        $errors = $errorConfig['errors'] ?? null;
+        if (!is_array($errors) || empty($errors)) {
+            return null;
+        }
+
+        $statuses = array_keys($errors);
+        $pickIdx = array_rand($statuses);
+        $status = (int) $statuses[$pickIdx];
+        $payload = $errors[$statuses[$pickIdx]] ?? null;
+
+        return [
+            'status' => $status,
+            'payload' => $payload,
+        ];
     }
 }

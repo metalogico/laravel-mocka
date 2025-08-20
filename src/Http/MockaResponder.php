@@ -8,16 +8,16 @@ class MockaResponder
 {
     /**
      * Build a PSR-7 response from the evaluated payload.
-     * Honors mapping 'delay' (ms) or config('mocka.default_delay_ms').
+     * Honors mapping 'delay' (ms) or config('mocka.default_delay').
      */
-    public static function toPsrResponse(mixed $payload, array $mapping = []): Psr7Response
+    public static function toPsrResponse(mixed $payload, array $mapping = [], int $status = 200): Psr7Response
     {
         // Delay handling (milliseconds)
         $delay = 0;
         if (isset($mapping['delay']) && is_numeric($mapping['delay'])) {
             $delay = (int) $mapping['delay'];
         } else {
-            $delay = (int) config('mocka.default_delay_ms', 0);
+            $delay = (int) config('mocka.default_delay', 0);
         }
         if ($delay > 0) {
             usleep($delay * 1000);
@@ -28,7 +28,6 @@ class MockaResponder
             return $payload;
         }
 
-        $status = 200;
         $headers = [];
         $body = '';
 

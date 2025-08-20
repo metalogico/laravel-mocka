@@ -18,7 +18,7 @@ return [
     'mocks_path' => resource_path('mocka'),
 
     // Default artificial delay for mocked responses (ms)
-    'default_delay_ms' => 0,
+    'default_delay' => 0,
 
     // Allowed application environments for Mocka activation (default: local only)
     // Extend this array to enable in other envs (e.g. ['local','staging']).
