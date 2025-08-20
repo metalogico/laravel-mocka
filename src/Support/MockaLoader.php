@@ -24,14 +24,13 @@ class MockaLoader
             return null;
         }
 
-        // Normalize method to uppercase
-        $method = strtoupper($method);
-        // If key is null, try METHOD only
-        $dot = $key ?: $method;
-        // If key doesn't start with METHOD., prefix it
-        if (!Str::startsWith($dot, $method . '.')) {
-            $dot = $method . ($key ? ('.' . $key) : '');
+        // If key is null, do not assume any convention
+        if ($key === null) {
+            return null;
         }
+
+        // Resolve exactly the provided key (supports arbitrary groupings like users.*, etc.)
+        $dot = $key;
 
         return Arr::get($data, $dot);
     }

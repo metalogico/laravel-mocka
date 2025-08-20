@@ -23,9 +23,9 @@ When your Laravel app calls external APIs (like DMS, MES, or any third-party ser
 - ❌ **Error simulation** - Test failure scenarios easily
 - 🛣️ **Header activator** - Enable/disable mocking via `X-Mocka` header
 - 📝 **Force activation** - Enable/disable mocking via `withOptions(['mocka' => true])`
-- 🐌 **Rate limiting simulation** - Simulate slow APIs for testing (coming soon ™)
+- 🐌 **Rate limiting simulation** - Simulate slow APIs delays for testing
 - 🔍 **Advanced URL matching** - Regex, wildcards, and parameter matching (coming soon ™)
-- ⌘ **Command Line tools** - Validate mock files and list mappings (coming soon ™)
+- ⌘ **Command Line tools** - List mappings
 - ⚡ **Zero performance impact** - Only active for designated users
 
 ## Installation
@@ -148,20 +148,6 @@ class DmsService
 ```
 
 ## Advanced Features
-
-### Route-Specific Mocking
-
-Use the middleware to enable mocking only for specific routes:
-
-```php
-// In your routes file
-Route::middleware(['mocka'])->group(function () {
-    Route::get('/demo', [DemoController::class, 'index']);
-});
-
-// Or on specific routes
-Route::get('/api/files', [FileController::class, 'index'])->middleware('mocka:force');
-```
 
 ### Response Types: Static, Dynamic, or Hybrid
 
@@ -342,21 +328,17 @@ Notes:
 
 ## Artisan Commands
 
-### Validate Mock Files
-
-Check if your mock files and mappings are correct:
-
-```bash
-php artisan mocka:validate
-```
-
 ### List Mock Mappings
 
-See all configured mock mappings:
+List all configured mappings and whether they correctly resolve to a mock file/key. The output uses a compact, two-line layout per mapping:
 
 ```bash
 php artisan mocka:list
 ```
+
+Per mapping you will see two rows:
+- Main row — shows mapping details and overall Status for file/key resolution.
+- Sub-row — shows the `errors` key (or `-` if none) in the `key` column, and its validation result in `status`.
 
 ## Configuration
 
@@ -379,12 +361,22 @@ return [
     // Default delay for all mocked requests (milliseconds)
     'default_delay' => 0,
 
+    // Security: only allow mocking for these hostnames (empty => all hosts allowed)
+    'allowed_hosts' => [],
+
+    // Allowed application environments for Mocka activation (default: local only)
+    // Extend this to enable in other envs, e.g. ['local', 'staging']
+    'environments' => ['local'],
+
     // URL mappings
     'mappings' => [
         // Your API mappings here
     ],
 ];
 ```
+
+- __allowed_hosts__: restricts Mocka activation to specific upstream hosts; leave empty to allow all.
+- __environments__: restricts activation to these Laravel environments (default ['local']).
 
 ## How It Works
 
