@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-08-25
+
+- Matching: wildcard now supports the query string when the mapping pattern contains `?`.
+  - In the query part, `*` matches any character sequence (including `&`, `=`, and percent-encodings).
+  - For patterns without `?`, matching remains limited to scheme+host+path and `*` matches a single path segment (no `/`).
+- Exact matching with `?`: now compares the full URL (path + query) to avoid false positives.
+
 ## [1.0.0] - 2025-08-20
 
 - Initial stable release.
