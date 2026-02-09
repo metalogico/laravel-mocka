@@ -233,7 +233,7 @@ Configure sophisticated URL matching patterns:
         'key' => 'GET.anyUser',
     ],
     
-    // Regex matching (coming soom ™)
+    // Regex matching (coming soon ™)
     [
         'url' => '/^https:\/\/api\.example\.com\/orders\/\d+$/',
         'match' => 'regex',
@@ -349,11 +349,12 @@ return [
     // Globally enable Mocka (default: false in production)
     'enabled' => env('MOCKA_ENABLED', false),
 
-    // Enable request logging (default: true in development)
-    'logs' => env('MOCKA_LOGS', true),
+    // Basic logging (can be extended later)
+    'logs' => env('MOCKA_LOGS', false),
 
-    // Users that get mocked responses
-    'users' => array_filter(explode(',', env('MOCKA_USERS', ''))),
+    // Users (emails) for which Mocka is active when enabled
+    // Supports comma-separated env var: MOCKA_USERS="apple@example.com, foo@bar.com"
+    'users' => array_values(array_filter(array_map('trim', explode(',', env('MOCKA_USERS', ''))))),
 
     // Path to mock files
     'mocks_path' => resource_path('mocka'),

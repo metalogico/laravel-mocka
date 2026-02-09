@@ -84,12 +84,7 @@ class MockaEngine
             return null;
         }
 
-        try {
-            $roll = random_int(1, 100);
-        } catch (\Throwable $e) {
-            // Fallback if random_int unavailable for any reason
-            $roll = mt_rand(1, 100);
-        }
+        $roll = random_int(1, 100);
 
         if ($roll > $rate) {
             return null;

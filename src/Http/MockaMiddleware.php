@@ -29,7 +29,7 @@ class MockaMiddleware
                 $url  = (string) $uri;
 
                 // Decide activation (also strips X-Mocka from request if present)
-                [$withMocka, $request, $reason] = self::decideActivation($request, $options);
+                [$withMocka, $request, $reason] = self::decideActivation($request, $options, $email);
 
                 // Prepare log fields once
                 $internal = null;
@@ -75,7 +75,7 @@ class MockaMiddleware
      * Returns array: [bool $active, RequestInterface $request, string $reason]
      *   $reason is one of '', 'user', 'option', 'header'.
      */
-    private static function decideActivation(RequestInterface $request, array $options): array
+    private static function decideActivation(RequestInterface $request, array $options, ?string $email = null): array
     {
         // Always sanitize control header (do not leak upstream)
         $hasXMocka  = $request->hasHeader('X-Mocka');
@@ -103,8 +103,6 @@ class MockaMiddleware
         }
 
         // User allowlist
-        $user  = Auth::user();
-        $email = $user ? ($user->email ?? null) : null;
         $users = (array) config('mocka.users', []);
         if ($email && $users) {
             $lower = array_map('strtolower', $users);
@@ -121,7 +119,7 @@ class MockaMiddleware
                 $optionActive = $forceOption;
             } else {
                 $val = strtolower(trim((string) $forceOption));
-                $optionActive = ($val === '' || $val === '1' || $val === 'true' || $val === 'yes' || $val === 'on');
+                $optionActive = ($val === '1' || $val === 'true' || $val === 'yes' || $val === 'on');
             }
         }
         if ($optionActive) {

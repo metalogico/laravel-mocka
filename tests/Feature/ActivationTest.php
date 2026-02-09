@@ -39,6 +39,117 @@ it('activates via user allowlist', function () {
     config()->set('mocka.users', []);
 });
 
+it('does NOT activate via X-Mocka: 0', function () {
+    config()->set('mocka.mappings', [
+        ['url' => 'http://api.example.com/flag', 'match' => 'exact', 'file' => 'basic.mock.php', 'key' => 'GET.ok'],
+    ]);
+
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(200, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = (new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/flag'))
+        ->withHeader('X-Mocka', '0');
+    $callable($req, [])->wait();
+
+    expect($nextCalled)->toBeTrue();
+});
+
+it('does NOT activate via X-Mocka: false', function () {
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(200, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = (new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/flag'))
+        ->withHeader('X-Mocka', 'false');
+    $callable($req, [])->wait();
+
+    expect($nextCalled)->toBeTrue();
+});
+
+it('activates via X-Mocka present but empty', function () {
+    config()->set('mocka.mappings', [
+        ['url' => 'http://api.example.com/flag', 'match' => 'exact', 'file' => 'basic.mock.php', 'key' => 'GET.ok'],
+    ]);
+
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(599, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = (new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/flag'))
+        ->withHeader('X-Mocka', '');
+    $callable($req, [])->wait();
+
+    expect($nextCalled)->toBeFalse();
+});
+
+it('does NOT activate via options mocka false', function () {
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(200, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/x');
+    $callable($req, ['mocka' => false])->wait();
+
+    expect($nextCalled)->toBeTrue();
+});
+
+it('does NOT activate via options mocka empty string', function () {
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(200, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/x');
+    $callable($req, ['mocka' => ''])->wait();
+
+    expect($nextCalled)->toBeTrue();
+});
+
+it('activates via options mocka string yes', function () {
+    config()->set('mocka.mappings', [
+        ['url' => 'http://api.example.com/users', 'match' => 'exact', 'file' => 'basic.mock.php', 'key' => 'GET.ok'],
+    ]);
+
+    $res = MockaHttp::withOptions(['mocka' => 'yes'])->get('http://api.example.com/users');
+
+    expect($res->successful())->toBeTrue();
+});
+
+it('does NOT activate for user not in allowlist', function () {
+    config()->set('mocka.users', ['allowed@example.com']);
+    Auth::shouldReceive('user')->andReturn((object) ['email' => 'other@example.com']);
+
+    $middleware = \Metalogico\Mocka\Http\MockaMiddleware::handle();
+    $nextCalled = false;
+    $handler = function ($request, $options) use (&$nextCalled) {
+        $nextCalled = true;
+        return \GuzzleHttp\Promise\Create::promiseFor(new \GuzzleHttp\Psr7\Response(200, [], 'real'));
+    };
+    $callable = $middleware($handler);
+    $req = new \GuzzleHttp\Psr7\Request('GET', 'http://api.example.com/x');
+    $callable($req, [])->wait();
+
+    expect($nextCalled)->toBeTrue();
+
+    \Mockery::close();
+    config()->set('mocka.users', []);
+});
+
 it('is inactive when environment not allowed (passes through)', function () {
     // Use middleware directly to avoid real HTTP
     config()->set('mocka.enabled', true);

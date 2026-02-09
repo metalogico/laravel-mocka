@@ -3,7 +3,6 @@
     "description": "Laravel Mocka provides fake API responses to designated users while serving real data to everyone else. A drop-in replacement for Laravel's Http facade, perfect for app store submissions, demos, and testing without disrupting production traffic",
     "keywords": [
         "laravel",
-        "forms",
         "mocks",
         "api",
         "testing"

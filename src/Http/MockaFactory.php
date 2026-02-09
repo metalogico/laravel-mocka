@@ -18,14 +18,4 @@ class MockaFactory extends Factory
         return $pending;
     }
 
-    /**
-     * Build the Guzzle handler stack and unshift Mocka middleware.
-     * Ensures coverage for any paths that bypass PendingRequest middleware.
-     */
-    protected function buildHandlerStack(array $options)
-    {
-        $stack = parent::buildHandlerStack($options);
-        $stack->unshift(MockaMiddleware::handle(), 'mocka');
-        return $stack;
-    }
 }
