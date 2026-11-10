@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Security
+
+- Updated locked Laravel Framework from 12.50.0 to 12.71.0 to include the latest security fixes.
+- Updated locked Guzzle to 7.16.1, PSR-7 to 2.13.2, CommonMark to 2.10.7, and Flysystem to 3.36.0, together with their required dependencies.
+- Updated locked Symfony HttpFoundation, HttpKernel, Routing, and Yaml to 7.4.23, Mailer and Mime to 7.4.22, and IntlIdn polyfill to 1.43.0 to address dependency security advisories.
+
 ## [1.0.2] - 2025-08-25
 
 - Added tests!
